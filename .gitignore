@@ -1,0 +1,13 @@
+# Bytecode and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+
+# SQLite DB
+data/*.db
+
+# Jupyter checkpoints
+**/.ipynb_checkpoints/
+
+# VSCode settings (optional)
+.vscode/
