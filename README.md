@@ -104,23 +104,18 @@ vibe coded
 
 
 
-## Daily Maintenance
-```
-python scripts/fetch_data.py       # Updates completed games with final scores
-python scripts/predict.py 2025-07-06
-python scripts/evaluate_predictions.py
-x
-```
+## Utility Scripts
+
 
 If games get rescheduled
-```
+```bash
 python scripts/clear_schedule.py   # Deletes future games only
 python scripts/fetch_schedule.py   # Re-adds corrected games
 
 ```
 
-Sample
-```
+Sample Run
+```bash
 .venvdanny@Dannys-MacBook-Pro v2 % python scripts/predict.py 2025-07-05 
 
 Scheduled games:
