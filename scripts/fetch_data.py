@@ -39,18 +39,37 @@ def update_or_insert_game(cursor, date, home_team, away_team, home_score, away_s
     """, (date, home_team, away_team))
     row = cursor.fetchone()
 
-    if row:
-        if (row[0] is None or row[1] is None) and (home_score is not None and away_score is not None):
-            cursor.execute("""
-                UPDATE games
-                SET home_score = ?, away_score = ?
-                WHERE date = ? AND home_team = ? AND away_team = ?
-            """, (home_score, away_score, date, home_team, away_team))
-    else:
+    # if row:
+    #     if (row[0] is None or row[1] is None) and (home_score is not None and away_score is not None):
+    #         cursor.execute("""
+    #             UPDATE games
+    #             SET home_score = ?, away_score = ?
+    #             WHERE date = ? AND home_team = ? AND away_team = ?
+    #         """, (home_score, away_score, date, home_team, away_team))
+    # else:
+    #     cursor.execute("""
+    #         INSERT INTO games (date, home_team, away_team, home_score, away_score)
+    #         VALUES (?, ?, ?, ?, ?)
+    #     """, (date, home_team, away_team, home_score, away_score))
+
+    # If there's no row, insert
+    if not row:
         cursor.execute("""
             INSERT INTO games (date, home_team, away_team, home_score, away_score)
             VALUES (?, ?, ?, ?, ?)
         """, (date, home_team, away_team, home_score, away_score))
+
+    # If the row exists and the new score is higher or previously zero, update
+    elif (
+        (row[0] is None or row[1] is None)
+        or (home_score is not None and away_score is not None and (row[0] == 0 and row[1] == 0))
+        or (home_score != row[0] or away_score != row[1])
+    ):
+        cursor.execute("""
+            UPDATE games
+            SET home_score = ?, away_score = ?
+            WHERE date = ? AND home_team = ? AND away_team = ?
+        """, (home_score, away_score, date, home_team, away_team))
 
 def main():
     conn = sqlite3.connect(DB_PATH)
