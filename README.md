@@ -135,3 +135,40 @@ Projected winner: Minnesota Lynx (diff = 11.05)
 Win probability: 79.0%
 95% CI for score diff: -16.3 to 39.9
 ```
+
+##
+SQL
+
+View Existing Predictions
+```bash
+SELECT 
+  date, 
+  home_team, 
+  away_team, 
+  predicted_home_score, 
+  predicted_away_score, 
+  predicted_diff, 
+  win_probability, 
+  conf_low, 
+  conf_high
+FROM predictions
+ORDER BY date DESC
+LIMIT 10;
+```
+
+View Most Recent Games
+```bash
+SELECT date, home_team, away_team, home_score, away_score
+FROM games
+WHERE home_score IS NOT NULL
+ORDER BY date DESC
+LIMIT 10;
+```
+
+View Upcoming Games
+```bash
+SELECT date, home_team, away_team
+FROM schedule
+WHERE date BETWEEN date('now') AND date('now', '+1 day')
+ORDER BY date ASC;
+```
