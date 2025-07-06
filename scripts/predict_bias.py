@@ -42,7 +42,9 @@ def get_team_biases_with_decay(conn, decay_days=30):
     combined = pd.concat([home_resid[["team", "residual", "decay_weight"]],
                           away_resid[["team", "residual", "decay_weight"]]])
 
-    return combined.groupby("team").apply(lambda g: np.average(g["residual"], weights=g["decay_weight"])).to_dict()
+    grouped = combined.groupby("team")[["residual", "decay_weight"]]
+    return grouped.apply(lambda g: np.average(g["residual"], weights=g["decay_weight"])).to_dict()
+
 
 def main(predict_date, std_multiplier=1.0, ci_low=5, ci_high=95, decay_days=30):
     conn = sqlite3.connect(DB_PATH)
@@ -101,7 +103,7 @@ def main(predict_date, std_multiplier=1.0, ci_low=5, ci_high=95, decay_days=30):
         margin = abs(predicted_home - predicted_away)
 
         print(f"{away} @ {home} on {predict_date}")
-        print(f"Prediction: {home} {predicted_home} - {predicted_away} {away}")
+        print(f"Prediction: {away} {predicted_away} - {predicted_home} {home}")
         print(f"Projected winner: {winner} (margin = {margin:.2f})")
         print(f"Win probability: {winner_prob*100:.1f}%")
         print(f"{100 - ci_high}%–{ci_high}% CI for score diff: {conf_low:.1f} to {conf_high:.1f}\n")
