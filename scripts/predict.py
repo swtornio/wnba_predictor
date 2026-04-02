@@ -9,6 +9,7 @@ from datetime import datetime
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from config import DB_PATH, TABLE_NAME
+from ratings import compute_srs, compute_rest_days_for_training, get_rest_days
 
 def main(predict_date, std_multiplier=1.0, ci_low=5, ci_high=95):
     conn = sqlite3.connect(DB_PATH)
@@ -18,8 +19,18 @@ def main(predict_date, std_multiplier=1.0, ci_low=5, ci_high=95):
     games["date"] = pd.to_datetime(games["date"])
     schedule["date"] = pd.to_datetime(schedule["date"])
 
-    X = games[["home_score", "away_score"]]
-    y = games["home_score"] - games["away_score"]
+    predict_year = pd.to_datetime(predict_date).year
+    season_games = games[games["date"].dt.year == predict_year]
+    srs = compute_srs(season_games)
+
+    training = compute_rest_days_for_training(games)
+    X = pd.DataFrame({
+        "home_srs": training["home_team"].map(lambda t: srs.get(t, 0.0)),
+        "away_srs": training["away_team"].map(lambda t: srs.get(t, 0.0)),
+        "home_rest_days": training["home_rest_days"],
+        "away_rest_days": training["away_rest_days"],
+    })
+    y = training["home_score"] - training["away_score"]
 
     model = Ridge()
     model.fit(X, y)
@@ -36,9 +47,15 @@ def main(predict_date, std_multiplier=1.0, ci_low=5, ci_high=95):
         if recent_home.empty or recent_away.empty:
             continue
 
-        home_avg = recent_home["home_score"].mean()
-        away_avg = recent_away["away_score"].mean()
-        features = pd.DataFrame([[home_avg, away_avg]], columns=["home_score", "away_score"])
+        home_srs_val = srs.get(home, 0.0)
+        away_srs_val = srs.get(away, 0.0)
+        predict_ts = pd.Timestamp(predict_date)
+        home_rest = get_rest_days(games, home, predict_ts)
+        away_rest = get_rest_days(games, away, predict_ts)
+        features = pd.DataFrame(
+            [[home_srs_val, away_srs_val, home_rest, away_rest]],
+            columns=["home_srs", "away_srs", "home_rest_days", "away_rest_days"]
+        )
         diff = model.predict(features)[0]
 
         # Matchup-based scoring average

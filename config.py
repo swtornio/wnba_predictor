@@ -1,5 +1,6 @@
 # config.py
 import os
 
-DB_PATH = "data/games.db"
+DATA_DIR = "data"
+DB_PATH = os.path.join(DATA_DIR, "games.db")
 TABLE_NAME = "games"
